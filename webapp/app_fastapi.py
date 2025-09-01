@@ -286,16 +286,25 @@ async def shutdown_event():
 async def index(request: Request):
     """Main dashboard"""
     assets = await AssetManager.get_assets()
-    return templates.TemplateResponse("options_chain.html", {
+    return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "assets": assets
     })
 
-@app.get("/old", response_class=HTMLResponse)
-async def old_dashboard(request: Request):
-    """Old dashboard"""
+@app.get("/filter", response_class=HTMLResponse)
+async def filter_view(request: Request):
+    """Simple filter view"""
     assets = await AssetManager.get_assets()
-    return templates.TemplateResponse("dashboard.html", {
+    return templates.TemplateResponse("simple_filter.html", {
+        "request": request,
+        "assets": assets
+    })
+
+@app.get("/chain", response_class=HTMLResponse)
+async def options_chain(request: Request):
+    """Options chain view"""
+    assets = await AssetManager.get_assets()
+    return templates.TemplateResponse("options_chain.html", {
         "request": request,
         "assets": assets
     })

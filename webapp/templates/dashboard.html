@@ -17,6 +17,86 @@
             background-color: #0d1117;
             color: #c9d1d9;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 14px;
+            }
+            
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .stats-card {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .stats-value {
+                font-size: 1.2rem;
+            }
+            
+            .nav-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 8px 12px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+            
+            .table {
+                font-size: 11px;
+            }
+            
+            .table th, .table td {
+                padding: 0.3rem;
+            }
+            
+            /* Hide less important columns on mobile */
+            .mobile-hide {
+                display: none;
+            }
+            
+            .card-body {
+                padding: 0.75rem;
+            }
+            
+            .form-label {
+                font-size: 12px;
+                margin-bottom: 0.25rem;
+            }
+            
+            .form-select {
+                font-size: 13px;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            .input-group-text {
+                font-size: 12px;
+                padding: 0.375rem 0.5rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .container-fluid {
+                padding: 0 8px;
+            }
+            
+            .stats-row {
+                flex-direction: column;
+            }
+            
+            .col-md-3, .col-md-6 {
+                margin-bottom: 10px;
+            }
         }
         
         .navbar {
@@ -193,22 +273,26 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">
-                <i class="fas fa-chart-line"></i> Bybit Options Monitor
+                <i class="fas fa-chart-line d-none d-sm-inline"></i> 
+                <span class="d-none d-md-inline">Bybit Options</span>
+                <span class="d-md-none">Options</span>
             </a>
             <div class="ms-auto d-flex align-items-center">
-                <div class="form-check form-switch me-3">
+                <div class="form-check form-switch me-2 d-none d-md-flex">
                     <input class="form-check-input" type="checkbox" id="autoRefreshToggle" checked>
                     <label class="form-check-label text-light" for="autoRefreshToggle">
-                        Auto Refresh (5s)
+                        <span class="d-none d-lg-inline">Auto Refresh (5s)</span>
+                        <span class="d-lg-none">Auto</span>
                     </label>
                 </div>
-                <button class="btn btn-sm btn-outline-light me-3" onclick="refreshData()">
-                    <i class="fas fa-sync-alt"></i> Refresh
+                <button class="btn btn-sm btn-outline-light me-2" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i>
+                    <span class="d-none d-sm-inline">Refresh</span>
                 </button>
-                <span class="badge bg-success">
+                <span class="badge bg-success d-none d-sm-inline-block">
                     <i class="fas fa-circle"></i> Live
                     <span id="liveIndicator"></span>
                 </span>
@@ -218,28 +302,30 @@
 
     <div class="container-fluid mt-3">
         <!-- Stats Row -->
-        <div class="row mb-3">
-            <div class="col-md-3">
+        <div class="row mb-3 stats-row">
+            <div class="col-6 col-md-3">
                 <div class="stats-card">
-                    <div class="text-muted small">Total Symbols</div>
+                    <div class="text-muted small">Total</div>
                     <div class="stats-value" id="totalSymbols">-</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stats-card">
-                    <div class="text-muted small">Messages Processed</div>
+                    <div class="text-muted small d-none d-md-block">Messages</div>
+                    <div class="text-muted small d-md-none">Msgs</div>
                     <div class="stats-value" id="messagesProcessed">-</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stats-card">
-                    <div class="text-muted small">Last Update</div>
+                    <div class="text-muted small">Updated</div>
                     <div class="stats-value" id="lastUpdate">-</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="stats-card">
-                    <div class="text-muted small">Memory Usage</div>
+                    <div class="text-muted small d-none d-md-block">Memory</div>
+                    <div class="text-muted small d-md-none">Mem</div>
                     <div class="stats-value" id="memoryUsage">-</div>
                 </div>
             </div>
@@ -262,12 +348,12 @@
                 </li>
                 {% endif %}
             {% endfor %}
-            <li class="nav-item ms-auto" role="presentation">
+            <li class="nav-item ms-auto d-none d-md-block" role="presentation">
                 <button class="btn btn-add-asset btn-sm mt-2 me-2" onclick="showAddAssetModal()">
-                    <i class="fas fa-plus"></i> Add Asset
+                    <i class="fas fa-plus"></i> <span class="d-none d-lg-inline">Add Asset</span>
                 </button>
                 <button class="btn btn-secondary btn-sm mt-2" onclick="showSettingsModal()">
-                    <i class="fas fa-cog"></i> Settings
+                    <i class="fas fa-cog"></i> <span class="d-none d-lg-inline">Settings</span>
                 </button>
             </li>
         </ul>
@@ -275,39 +361,26 @@
         <!-- Filters -->
         <div class="card mt-3">
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <label class="form-label">Expiry</label>
-                        <select class="form-select" id="expiryFilter" onchange="applyFilters()">
+                <div class="row g-2">
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Expiry Date</label>
+                        <select class="form-select form-select-sm" id="expiryFilter" onchange="applyFilters()">
                             <option value="all">All Expiries</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Strike Price</label>
-                        <select class="form-select" id="strikeFilter" onchange="applyFilters()">
-                            <option value="all">All Strikes</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
+                    <div class="col-12 col-md-3">
                         <label class="form-label">Option Type</label>
-                        <select class="form-select" id="typeFilter" onchange="applyFilters()">
-                            <option value="all">All Types</option>
+                        <select class="form-select form-select-sm" id="typeFilter" onchange="applyFilters()">
+                            <option value="all">All Options</option>
                             <option value="call">Calls Only</option>
                             <option value="put">Puts Only</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Min Volume</label>
-                        <input type="number" class="form-control" id="volumeFilter" 
-                               placeholder="0" onchange="applyFilters()">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Display Options</label>
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="checkbox" id="showGreeks" checked>
-                            <label class="form-check-label" for="showGreeks">
-                                Show Greeks
-                            </label>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Market Info</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-dark text-light" id="currentPrice">Loading...</span>
+                            <span class="input-group-text bg-dark text-light" id="atmStrike">ATM: -</span>
                         </div>
                     </div>
                 </div>
@@ -323,23 +396,23 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table id="optionsTable" class="table table-dark table-striped table-hover">
+                    <table id="optionsTable" class="table table-dark table-striped table-hover table-sm">
                         <thead>
                             <tr>
                                 <th>Symbol</th>
                                 <th>Type</th>
                                 <th>Strike</th>
                                 <th>Expiry</th>
-                                <th>Last Price</th>
-                                <th>Mark Price</th>
-                                <th>Volume 24h</th>
-                                <th>Open Interest</th>
+                                <th class="d-none d-md-table-cell">Last</th>
+                                <th>Mark</th>
+                                <th>Vol</th>
+                                <th class="d-none d-lg-table-cell">OI</th>
                                 <th>Delta</th>
-                                <th>Gamma</th>
-                                <th>Theta</th>
-                                <th>Vega</th>
+                                <th class="d-none d-xl-table-cell">Gamma</th>
+                                <th class="d-none d-xl-table-cell">Theta</th>
+                                <th class="d-none d-xl-table-cell">Vega</th>
                                 <th>IV</th>
-                                <th>Underlying</th>
+                                <th class="d-none d-lg-table-cell">Underlying</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -427,6 +500,9 @@
         let optionsTable = null;
         let autoRefreshInterval = null;
         let eventSource = null;
+        let allOptionsData = [];
+        let currentPrice = 0;
+        let atmStrike = 0;
 
         // Initialize
         $(document).ready(function() {
@@ -509,9 +585,6 @@
             currentAsset = asset;
             $('.loading').show();
             
-            // Reset filters
-            $('#strikeFilter').html('<option value="all">All Strikes</option>');
-            
             // Load expiries
             $.get(`/api/expiries/${asset}`, function(expiries) {
                 const select = $('#expiryFilter');
@@ -526,43 +599,27 @@
             // Load options data
             refreshData();
         }
-        
-        // Update strikes when expiry changes
-        $('#expiryFilter').change(function() {
-            const expiry = $(this).val();
-            if (expiry !== 'all') {
-                $.get(`/api/strikes/${currentAsset}`, {expiry: expiry}, function(strikes) {
-                    const select = $('#strikeFilter');
-                    select.html('<option value="all">All Strikes</option>');
-                    strikes.forEach(strike => {
-                        select.append(`<option value="${strike}">${strike}</option>`);
-                    });
-                });
-            } else {
-                $('#strikeFilter').html('<option value="all">All Strikes</option>');
-            }
-            applyFilters();
-        });
 
         // Refresh data
         function refreshData() {
             const expiry = $('#expiryFilter').val();
-            const strike = $('#strikeFilter').val();
-            const type = $('#typeFilter').val();
-            const minVolume = $('#volumeFilter').val() || 0;
             
             $.get(`/api/options/${currentAsset}`, {
-                expiry: expiry,
-                strike: strike,
-                type: type
+                expiry: expiry || 'all'
             }, function(data) {
-                // Filter by volume
-                const filtered = data.filter(item => item.volume_24h >= minVolume);
+                allOptionsData = data;
                 
-                // Update table
-                optionsTable.clear();
-                optionsTable.rows.add(filtered);
-                optionsTable.draw();
+                // Update current price and ATM
+                if (data.length > 0) {
+                    currentPrice = data[0].underlying;
+                    $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
+                    
+                    // Find ATM strike
+                    findATMStrike(data);
+                }
+                
+                // Apply filters
+                applyFilters();
                 
                 $('.loading').hide();
             }).fail(function() {
@@ -570,10 +627,46 @@
                 console.error('Failed to load options data');
             });
         }
+        
+        // Find ATM strike
+        function findATMStrike(data) {
+            const strikes = [...new Set(data.map(o => parseFloat(o.strike)))].sort((a, b) => a - b);
+            let minDiff = Infinity;
+            
+            strikes.forEach(strike => {
+                const diff = Math.abs(strike - currentPrice);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    atmStrike = strike;
+                }
+            });
+            
+            $('#atmStrike').text(`ATM: ${atmStrike}`);
+        }
 
         // Apply filters
         function applyFilters() {
-            refreshData();
+            const typeFilter = $('#typeFilter').val();
+            const expiry = $('#expiryFilter').val();
+            
+            let filtered = allOptionsData;
+            
+            // Apply type filter
+            if (typeFilter !== 'all') {
+                filtered = filtered.filter(item => {
+                    if (typeFilter === 'call') {
+                        return item.type === 'Call';
+                    } else if (typeFilter === 'put') {
+                        return item.type === 'Put';
+                    }
+                    return true;
+                });
+            }
+            
+            // Update table
+            optionsTable.clear();
+            optionsTable.rows.add(filtered);
+            optionsTable.draw();
         }
 
         // Auto refresh
