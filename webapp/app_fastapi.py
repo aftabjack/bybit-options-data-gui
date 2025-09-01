@@ -3,6 +3,9 @@
 FastAPI Modular Options Web App with Dynamic Asset Management
 """
 
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file
+
 import json
 import os
 import asyncio
@@ -52,8 +55,7 @@ class AssetManager:
     ASSETS_KEY = "config:assets"
     DEFAULT_ASSETS = {
         "BTC": {"name": "Bitcoin", "enabled": True, "order": 1},
-        "ETH": {"name": "Ethereum", "enabled": True, "order": 2},
-        "SOL": {"name": "Solana", "enabled": True, "order": 3}
+        "SOL": {"name": "Solana", "enabled": True, "order": 2}
     }
     
     @classmethod

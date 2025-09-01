@@ -97,6 +97,12 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
+.env.*.local
+.env.production
+.env.development
+*.env
+!.env.example
 .venv
 env/
 venv/
@@ -138,6 +144,14 @@ options_tracker.log
 symbols_cache.json
 redis-data/
 logs/
+crypto_market_data.db
+dump.rdb
+
+# Telegram session files
+*.session
+*.session-journal
+bybit_tracker_session*
+my_session*
 
 # Temporary files
 *.tmp

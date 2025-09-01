@@ -41,3 +41,6 @@ numpy==1.26.3
 # Utilities
 schedule==1.2.0
 python-json-logger==2.0.7
+
+# Telegram Notifications
+telethon==1.34.0

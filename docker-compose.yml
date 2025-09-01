@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: bybit-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - bybit-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  tracker:
+    build: .
+    container_name: bybit-tracker
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CLEAR_DB_ON_START=false
+      - BATCH_SIZE=100
+      - BATCH_TIMEOUT=5.0
+      - SYMBOL_CACHE_TTL=86400
+      - HEALTH_CHECK_PORT=8080
+      # Telegram Notifications (Optional)
+      - ENABLE_NOTIFICATIONS=${ENABLE_NOTIFICATIONS:-false}
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID:-}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH:-}
+      - TELEGRAM_NOTIFICATION_CHANNEL=${TELEGRAM_NOTIFICATION_CHANNEL:-}
+    volumes:
+      - ./bybit_tracker_session.session:/app/bybit_tracker_session.session
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - bybit-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  webapp:
+    build:
+      context: .
+      dockerfile: webapp/Dockerfile
+    container_name: bybit-webapp
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    restart: unless-stopped
+    networks:
+      - bybit-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5001/api/stats')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  bybit-network:
+    driver: bridge

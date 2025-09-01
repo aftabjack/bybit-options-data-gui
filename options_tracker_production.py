@@ -5,6 +5,11 @@ Optimized for efficiency, stability, and Docker deployment
 """
 
 import asyncio
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 import json
 import logging
 import os
@@ -21,6 +26,7 @@ import redis
 import requests
 from pybit.unified_trading import WebSocket
 from redis.exceptions import ConnectionError, TimeoutError, RedisError
+from telegram_notifier import notification_manager
 
 
 # ==================== CONFIGURATION ====================
@@ -70,6 +76,9 @@ class Config:
     # Health Check
     HEALTH_CHECK_PORT = int(os.getenv('HEALTH_CHECK_PORT', '8080'))
     ENABLE_HEALTH_CHECK = os.getenv('ENABLE_HEALTH_CHECK', 'true').lower() == 'true'
+    
+    # Telegram Notifications
+    ENABLE_NOTIFICATIONS = os.getenv('ENABLE_NOTIFICATIONS', 'false').lower() == 'true'
 
 
 # ==================== LOGGING SETUP ====================
@@ -98,6 +107,7 @@ class ProductionOptionsTracker:
         self.batch_writer_task = None
         self.health_server_task = None
         self.reconnect_count = 0
+        self.notifications_enabled = Config.ENABLE_NOTIFICATIONS
         
         # Performance metrics
         self.metrics = {
@@ -148,19 +158,28 @@ class ProductionOptionsTracker:
             
         except (ConnectionError, TimeoutError) as e:
             logger.error(f"Redis connection failed: {e}")
+            if self.notifications_enabled:
+                asyncio.create_task(notification_manager.redis_connection_failed(str(e)))
             return False
         except Exception as e:
             logger.error(f"Unexpected Redis error: {e}")
+            if self.notifications_enabled:
+                asyncio.create_task(notification_manager.handle_error(
+                    "Redis", f"Unexpected error: {e}", critical=True
+                ))
             return False
     
     def clear_database(self):
         """Clear Redis database with safety check"""
         try:
-            if os.getenv('ALLOW_DB_CLEAR', 'true').lower() == 'true':
+            clear_on_start = os.getenv('CLEAR_DB_ON_START', 'false').lower() == 'true'
+            allow_clear = os.getenv('ALLOW_DB_CLEAR', 'true').lower() == 'true'
+            
+            if clear_on_start and allow_clear:
                 self.redis_client.flushdb()
-                logger.info("Redis database cleared")
+                logger.info("Redis database cleared on startup")
             else:
-                logger.info("Database clear skipped (ALLOW_DB_CLEAR=false)")
+                logger.info(f"Database clear skipped (CLEAR_DB_ON_START={clear_on_start}, ALLOW_DB_CLEAR={allow_clear})")
         except RedisError as e:
             logger.error(f"Failed to clear database: {e}")
     
@@ -192,6 +211,12 @@ class ProductionOptionsTracker:
             except Exception as e:
                 logger.error(f"Batch writer error: {e}")
                 self.metrics['redis_errors'] += 1
+                if self.notifications_enabled and self.metrics['redis_errors'] % 10 == 0:
+                    await notification_manager.handle_error(
+                        "BatchWriter", 
+                        f"Multiple batch write failures: {self.metrics['redis_errors']} errors",
+                        {"Last Error": str(e)}
+                    )
                 await asyncio.sleep(1)
     
     async def _write_batch_with_pipeline(self, batch: List[Dict]):
@@ -234,6 +259,12 @@ class ProductionOptionsTracker:
         except RedisError as e:
             logger.error(f"Redis pipeline error: {e}")
             self.metrics['redis_errors'] += 1
+            if self.notifications_enabled and self.metrics['redis_errors'] % 10 == 0:
+                await notification_manager.handle_error(
+                    "Redis Pipeline",
+                    f"Pipeline write failures: {self.metrics['redis_errors']} total errors",
+                    {"Error": str(e), "Batch Size": len(batch)}
+                )
         except Exception as e:
             logger.error(f"Unexpected pipeline error: {e}")
     
@@ -533,6 +564,10 @@ class ProductionOptionsTracker:
         logger.info("PRODUCTION OPTIONS TRACKER STARTING")
         logger.info("=" * 60)
         
+        # Initialize notifications if enabled
+        if self.notifications_enabled:
+            await notification_manager.initialize()
+        
         # Initialize Redis
         if not self.init_redis():
             logger.error("Failed to initialize Redis. Exiting.")
@@ -562,6 +597,13 @@ class ProductionOptionsTracker:
         success = await self.subscribe_with_retry(symbols)
         if not success:
             logger.error("Failed to establish WebSocket connection")
+            if self.notifications_enabled:
+                await notification_manager.handle_error(
+                    "WebSocket",
+                    "Failed to establish initial WebSocket connection",
+                    {"Symbols Count": len(symbols)},
+                    critical=True
+                )
             self.running = False
             return
         
@@ -582,6 +624,10 @@ class ProductionOptionsTracker:
                     time_since_last = (datetime.now() - self.metrics['last_message_time']).seconds
                     if time_since_last > 60:
                         logger.warning(f"No messages for {time_since_last} seconds, attempting reconnect...")
+                        if self.notifications_enabled and time_since_last > 120:
+                            await notification_manager.websocket_disconnected(
+                                f"No data for {time_since_last} seconds"
+                            )
                         await self.subscribe_with_retry(symbols)
                 
             except Exception as e:
@@ -618,6 +664,10 @@ class ProductionOptionsTracker:
         logger.info("Starting graceful shutdown...")
         
         self.running = False
+        
+        # Send shutdown notification
+        if self.notifications_enabled:
+            await notification_manager.shutdown()
         
         # Process remaining queue items
         if self.write_queue:
